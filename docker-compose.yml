@@ -4,9 +4,9 @@ services:
   bookmarks-server:
     build: ./docker
     container_name: bookmarks-server
-    # Port mapping removed - use docker-compose.nginx-proxy.yml for Nginx Proxy Manager
-    # ports:
-    #   - "${PORT:-9080}:9080"
+    # Expose port for direct access
+    ports:
+      - "${PORT:-9080}:9080"
     volumes:
       # Mount bookmarks data directory using Docker volume
       - bookmarks_data:/data/bookmarks:rw
