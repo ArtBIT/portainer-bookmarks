@@ -1,0 +1,31 @@
+# Nginx Proxy Manager integration docker-compose file
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.nginx-proxy.yml up -d
+
+version: '3.8'
+
+services:
+  bookmarks-server:
+    # Expose port for Nginx Proxy Manager to connect
+    ports:
+      - "9080:9080"
+    # Add container name for easy reference in Nginx Proxy Manager
+    container_name: bookmarks-server
+    # Add labels for better organization
+    labels:
+      - "com.docker.compose.project=bookmarks"
+      - "com.docker.compose.service=bookmarks-server"
+      - "nginx-proxy-manager.enabled=true"
+    # Use host network for direct access (optional)
+    # network_mode: host
+    # Or use external network if Nginx Proxy Manager is on different network
+    networks:
+      - bookmarks-network
+      # Uncomment if Nginx Proxy Manager uses a specific network
+      # - nginx-proxy-network
+
+networks:
+  bookmarks-network:
+    driver: bridge
+  # Uncomment if Nginx Proxy Manager uses a specific network
+  # nginx-proxy-network:
+  #   external: true 

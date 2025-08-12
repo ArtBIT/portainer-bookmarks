@@ -1,0 +1,48 @@
+# Production docker-compose file
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  bookmarks-server:
+    # Production optimizations
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    # Production environment
+    environment:
+      - DEBUG=WARNING
+      - NODE_ENV=production
+    # Production volumes with proper permissions
+    volumes:
+      - bookmarks-data:/data/bookmarks:rw
+      - bookmarks-logs:/data/logs:rw
+    # Production labels for better organization
+    labels:
+      - "com.docker.compose.project=bookmarks-prod"
+      - "com.docker.compose.service=bookmarks-server"
+      - "nginx-proxy-manager.enabled=true"
+
+volumes:
+  bookmarks-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker/data
+  bookmarks-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker/logs 
