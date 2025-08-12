@@ -41,11 +41,6 @@ open http://localhost:9080
    PORT=9080                    # Server port
    DEBUG=INFO                   # Log level
    DOMAIN=bookmarks.yourdomain.com  # For Nginx Proxy Manager integration
-   
-   # Volume Configuration (optional)
-   BOOKMARKS_DATA_VOLUME=my_bookmarks_data    # Custom data volume name
-   BOOKMARKS_LOGS_VOLUME=my_bookmarks_logs    # Custom logs volume name
-   BOOKMARKS_CONFIG_VOLUME=my_bookmarks_config # Custom config volume name
    ```
 
 3. **Access the Application**:
@@ -69,6 +64,15 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker-compose -f docker-compose.yml -f docker-compose.nginx-proxy.yml up -d
 ```
 
+### With Custom Volume Names
+```bash
+# Set environment variables for custom volume names
+BOOKMARKS_DATA_VOLUME=my_data \
+BOOKMARKS_LOGS_VOLUME=my_logs \
+BOOKMARKS_CONFIG_VOLUME=my_config \
+docker-compose -f docker-compose.yml -f docker-compose.custom-volumes.yml up -d
+```
+
 ### With External Volumes
 ```bash
 # Pre-create volumes
@@ -77,6 +81,9 @@ docker volume create my_bookmarks_logs
 docker volume create my_bookmarks_config
 
 # Deploy with external volumes
+BOOKMARKS_DATA_VOLUME=my_bookmarks_data \
+BOOKMARKS_LOGS_VOLUME=my_bookmarks_logs \
+BOOKMARKS_CONFIG_VOLUME=my_bookmarks_config \
 docker-compose -f docker-compose.yml -f docker-compose.external-volumes.yml up -d
 ```
 
@@ -105,11 +112,11 @@ docker-compose up -d
 
 #### **2. Custom Volume Names**
 ```bash
-# Set environment variables for custom volume names
+# Use the custom volumes override file
 BOOKMARKS_DATA_VOLUME=my_data \
 BOOKMARKS_LOGS_VOLUME=my_logs \
 BOOKMARKS_CONFIG_VOLUME=my_config \
-docker-compose up -d
+docker-compose -f docker-compose.yml -f docker-compose.custom-volumes.yml up -d
 ```
 
 #### **3. Stack Name-Based Volumes**
@@ -194,9 +201,10 @@ curl -X POST "http://localhost:9080/add" \
 
 ```
 bookmarks/
-├── docker-compose.yml                    # Main compose file
+├── docker-compose.yml                    # Main compose file (fixed volumes)
 ├── docker-compose.prod.yml              # Production overrides
 ├── docker-compose.nginx-proxy.yml       # Nginx Proxy Manager integration
+├── docker-compose.custom-volumes.yml    # Custom volume names
 ├── docker-compose.external-volumes.yml  # External volumes configuration
 ├── docker-compose.template.yml          # Template for stack name-based volumes
 ├── docker-compose.override.yml          # Development overrides
@@ -225,9 +233,9 @@ bookmarks/
 | `DEBUG` | `INFO` | Log level |
 | `BOOKMARKS_DIR` | `/data/bookmarks` | Bookmarks data directory |
 | `LOG_FILE` | `/data/logs/bookmarks-server.log` | Log file path |
-| `BOOKMARKS_DATA_VOLUME` | `bookmarks_data` | Data volume name |
-| `BOOKMARKS_LOGS_VOLUME` | `bookmarks_logs` | Logs volume name |
-| `BOOKMARKS_CONFIG_VOLUME` | `bookmarks_config` | Config volume name |
+| `BOOKMARKS_DATA_VOLUME` | `bookmarks_data` | Data volume name (with custom-volumes.yml) |
+| `BOOKMARKS_LOGS_VOLUME` | `bookmarks_logs` | Logs volume name (with custom-volumes.yml) |
+| `BOOKMARKS_CONFIG_VOLUME` | `bookmarks_config` | Config volume name (with custom-volumes.yml) |
 
 ### Port Configuration
 
