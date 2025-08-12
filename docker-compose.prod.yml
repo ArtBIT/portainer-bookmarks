@@ -23,10 +23,6 @@ services:
     environment:
       - DEBUG=WARNING
       - NODE_ENV=production
-    # Production volumes with proper permissions
-    volumes:
-      - bookmarks-data:/data/bookmarks:rw
-      - bookmarks-logs:/data/logs:rw
     # Production labels for better organization
     labels:
       - "com.docker.compose.project=bookmarks-prod"
@@ -34,15 +30,9 @@ services:
       - "nginx-proxy-manager.enabled=true"
 
 volumes:
-  bookmarks-data:
+  bookmarks_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./docker/data
-  bookmarks-logs:
+  bookmarks_logs:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./docker/logs 
+  bookmarks_config:
+    driver: local 

@@ -19,13 +19,14 @@ COPY bookmarks_importer.py .
 COPY config.py .
 COPY static/ ./static/
 
-# Create directories for data and logs
-RUN mkdir -p /data/bookmarks /data/logs
+# Create directories for data, logs, and config
+RUN mkdir -p /data/bookmarks /data/logs /app/config
 
 # Set environment variables
 ENV BOOKMARKS_DIR=/data/bookmarks
 ENV DEBUG=INFO
 ENV PORT=9080
+ENV LOG_FILE=/data/logs/bookmarks-server.log
 
 # Expose port
 EXPOSE 9080

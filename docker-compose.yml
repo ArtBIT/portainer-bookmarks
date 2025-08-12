@@ -8,12 +8,12 @@ services:
     # ports:
     #   - "${PORT:-9080}:9080"
     volumes:
-      # Mount bookmarks data directory
-      - ./docker/data:/data/bookmarks:rw
-      # Mount logs directory
-      - ./docker/logs:/data/logs:rw
-      # Mount configuration (optional)
-      - ./.bookmarks.env:/app/.bookmarks.env:ro
+      # Mount bookmarks data directory using Docker volume
+      - ${BOOKMARKS_DATA_VOLUME:-bookmarks_data}:/data/bookmarks:rw
+      # Mount logs directory using Docker volume
+      - ${BOOKMARKS_LOGS_VOLUME:-bookmarks_logs}:/data/logs:rw
+      # Mount configuration using Docker volume
+      - ${BOOKMARKS_CONFIG_VOLUME:-bookmarks_config}:/app/config:ro
     environment:
       - BOOKMARKS_DIR=/data/bookmarks
       - DEBUG=${DEBUG:-INFO}
@@ -35,5 +35,9 @@ networks:
     driver: bridge
 
 volumes:
-  bookmarks-data:
+  ${BOOKMARKS_DATA_VOLUME:-bookmarks_data}:
+    driver: local
+  ${BOOKMARKS_LOGS_VOLUME:-bookmarks_logs}:
+    driver: local
+  ${BOOKMARKS_CONFIG_VOLUME:-bookmarks_config}:
     driver: local 
