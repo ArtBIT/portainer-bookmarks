@@ -304,4 +304,30 @@ tags: [{all_tags}]
             uri=url,
             category=category,
             tags=tags
-        ) 
+        )
+
+    def _find_file_by_id(self, file_id: str) -> str | None:
+        for root, dirs, files in os.walk(self.bookmarks_dir):
+            for file in files:
+                if file.endswith('.md'):
+                    file_path = os.path.join(root, file)
+                    if hashlib.md5(file_path.encode()).hexdigest() == file_id:
+                        return file_path
+        return None
+
+    def delete_bookmark(self, file_id: str) -> Dict[str, str]:
+        try:
+            if not file_id:
+                return {"error": "ID cannot be empty"}
+            file_path = self._find_file_by_id(file_id)
+            if not file_path:
+                return {"error": f"Bookmark not found: {file_id}"}
+            os.remove(file_path)
+            category_dir = os.path.dirname(file_path)
+            if not os.listdir(category_dir):
+                os.rmdir(category_dir)
+            self.logger.info(f"Deleted bookmark: {file_path}")
+            return {"success": "Bookmark deleted successfully", "id": file_id}
+        except Exception as e:
+            self.logger.error(f"Failed to delete bookmark: {e}")
+            return {"error": f"Failed to delete bookmark: {str(e)}"}

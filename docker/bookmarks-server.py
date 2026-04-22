@@ -166,12 +166,29 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         return
 
+    def do_DELETE(self):
+        """
+            Handle DELETE request from client
+        """
+        logging.info('DELETE request')
+        if self.path.startswith('/remove'):
+            self.handle_remove()
+            return
+
+        return
+
     def do_OPTIONS(self):
         """
             Handle OPTION request from client
         """
         logging.info('OPTION request')
         if self.path.startswith('/add'):
+            self.send_response(200)
+            self.send_cors_headers()
+            self.end_headers()
+            return
+
+        elif self.path.startswith('/remove'):
             self.send_response(200)
             self.send_cors_headers()
             self.end_headers()
@@ -521,6 +538,31 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes(error_response, 'utf-8'))
             return
+
+    def handle_remove(self):
+        """
+            Handle remove request from client
+        """
+        self.parse_params()
+        file_id = self.post_params.get('id', '')
+        logging.info('Removing {}'.format(file_id))
+
+        try:
+            result = self.bookmarks_manager.delete_bookmark(file_id)
+            response = json.dumps(result)
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(bytes(response, 'utf-8'))
+        except Exception as e:
+            logging.error('Error removing bookmark: {}'.format(e))
+            error_response = json.dumps({'error': 'Error removing bookmark', 'message': str(e)})
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_cors_headers()
+            self.end_headers()
+            self.wfile.write(bytes(error_response, 'utf-8'))
 
     def send_cors_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
