@@ -95,11 +95,11 @@ class BookmarksManager:
                 with urllib.request.urlopen(req, timeout=self.curl_options['timeout']) as response:
                     return 200 <= response.status < 400
             elif self.is_file(uri):
-                # Check if file is readable
-                expanded_path = self.expand_path(uri)
-                return os.access(expanded_path, os.R_OK)
+                # File paths are client-side; allow them regardless of server accessibility
+                return True
             else:
-                return False
+                # Unknown schemes (ftp://, ssh://, custom://) — allow them
+                return True
         except Exception as e:
             self.logger.debug(f"URI accessibility check failed for {uri}: {e}")
             return False
@@ -151,7 +151,7 @@ class BookmarksManager:
                 uri = self.get_final_uri(uri)
             
             # Check if URI is accessible
-            if not self.is_uri_accessible(uri):
+            if not force and not self.is_uri_accessible(uri):
                 return {"error": f"URI is not accessible: {uri}"}
             
             # Set default category
