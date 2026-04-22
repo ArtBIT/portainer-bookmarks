@@ -644,7 +644,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.post_params = json.loads(body.decode('utf-8'))
             else:
                 # parse url encoded body
-                self.post_params = dict([p.split('=') for p in body.decode('utf-8').split('&')])
+                self.post_params = dict([p.split('=', 1) for p in body.decode('utf-8').split('&')])
 
     def search_files(self, search_value):
         """
