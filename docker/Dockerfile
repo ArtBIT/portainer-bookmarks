@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY bookmarks-server.py .
 COPY bookmarks_manager.py .
 COPY bookmarks_importer.py .
+COPY bookmarks_exporter.py .
 COPY config.py .
 COPY static/ ./static/
 
