@@ -11,9 +11,11 @@ import logging
 import cgi
 import tempfile
 import shutil
+import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from bookmarks_manager import BookmarksManager
 from bookmarks_importer import BookmarksImporter
+from bookmarks_exporter import BookmarksExporter
 from config import PORT, HOST, BOOKMARKS_DIR, DEBUG, LOG_FILE
 
 # Ensure log directory exists
@@ -87,6 +89,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         elif self.path.startswith('/import'):
             self.handle_import()
             return
+        elif self.path.startswith('/export/download'):
+            self.handle_export_download()
+            return
+        elif self.path.startswith('/export'):
+            self.handle_export()
+            return
 
         elif os.path.exists(static_dir + self.path) and os.path.isfile(static_dir + self.path):
             extension = os.path.splitext(self.path)[1]
@@ -137,6 +145,11 @@ class ServerHandler(BaseHTTPRequestHandler):
                         <h3>Import Bookmarks</h3>
                         <p>Import bookmarks from HTML, JSON, CSV, or Pocket export files.</p>
                         <a href="/import" role="button">Import</a>
+                    </div>
+                    <div>
+                        <h3>Export Bookmarks</h3>
+                        <p>Download all your bookmarks as JSON, HTML, or CSV.</p>
+                        <a href="/export" role="button">Export</a>
                     </div>
                 </div>
                 
@@ -443,6 +456,65 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes(result_page, 'utf-8'))
+
+    def handle_export(self):
+        """
+            Show export form
+        """
+        form = '''
+            <h2>Export Bookmarks</h2>
+            <p>Download all your bookmarks in a standard format.</p>
+            <form action="/export/download" method="get">
+                <label for="format">Format:</label>
+                <select name="format" id="format">
+                    <option value="json">JSON (structured data)</option>
+                    <option value="html">HTML (Netscape, browser-compatible)</option>
+                    <option value="csv">CSV (spreadsheet-compatible)</option>
+                </select>
+                <br><br>
+                <button type="submit">Download</button>
+            </form>
+            <br>
+            <p><a href="/">← Back to main page</a></p>
+        '''
+        result = PAGE_TEMPLATE.format(form)
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(bytes(result, 'utf-8'))
+
+    def handle_export_download(self):
+        """
+            Generate and stream the bookmarks file download
+        """
+        try:
+            self.parse_get_params()
+            fmt = self.get_params.get('format', 'json')
+            if fmt not in ('json', 'html', 'csv'):
+                self.handle_error(400, f'Invalid format: {fmt}')
+                return
+
+            date_str = datetime.date.today().strftime('%Y-%m-%d')
+            filename = f'bookmarks_{date_str}.{fmt}'
+
+            exporter = BookmarksExporter()
+            result = exporter.export_file(fmt)
+            if not result['success']:
+                self.handle_error(500, result['error'])
+                return
+
+            content_types = {
+                'json': 'application/json',
+                'html': 'text/html; charset=utf-8',
+                'csv': 'text/csv; charset=utf-8',
+            }
+            self.send_response(200)
+            self.send_header('Content-type', content_types[fmt])
+            self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+            self.end_headers()
+            self.wfile.write(result['data'])
+        except Exception as e:
+            self.handle_error(500, str(e))
 
     def _parse_multipart(self, body, boundary):
         """
