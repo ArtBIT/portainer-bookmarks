@@ -8,12 +8,11 @@ services:
     ports:
       - "${PORT:-9080}:9080"
     volumes:
-      # Mount bookmarks data directory using Docker volume
-      - bookmarks_data:/data/bookmarks:rw
-      # Mount logs directory using Docker volume
-      - bookmarks_logs:/data/logs:rw
-      # Mount configuration using Docker volume
-      - bookmarks_config:/app/config:ro
+      # Docker volumes by default; set these to host paths to use bind mounts instead,
+      # e.g. BOOKMARKS_DATA_VOLUME=/portainer/Files/AppData/Config/bookmarks/data
+      - ${BOOKMARKS_DATA_VOLUME:-bookmarks_data}:/data/bookmarks:rw
+      - ${BOOKMARKS_LOGS_VOLUME:-bookmarks_logs}:/data/logs:rw
+      - ${BOOKMARKS_CONFIG_VOLUME:-bookmarks_config}:/app/config:ro
     environment:
       - BOOKMARKS_DIR=/data/bookmarks
       - DEBUG=${DEBUG:-INFO}
