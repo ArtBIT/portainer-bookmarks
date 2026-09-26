@@ -4,6 +4,34 @@
 
 A self-hosted bookmarks service that keeps every link as a plain markdown file you own, with a web app you can install on your phone and share links to straight from any app.
 
+## TL;DR: up and running in 10 minutes
+
+Run the server 24/7 in Docker on a Raspberry Pi or any homelab box, and reach it from anywhere over HTTPS with [Tailscale](https://tailscale.com). No port forwarding, no certificates to manage, and only your own devices can reach it.
+
+**1. Start the server** on your Pi or homelab machine:
+
+```bash
+curl -fsSL https://get.docker.com | sh     # skip if Docker is already installed
+sudo apt-get install -y git                # skip if git is already installed
+git clone https://github.com/ArtBIT/portainer-bookmarks && cd portainer-bookmarks
+echo "BOOKMARKS_HOME=$HOME/bookmarks" > .env
+sudo docker compose up -d --build
+```
+
+**2. Give it an HTTPS address** on your private Tailscale network:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up                          # prints a link to sign in
+sudo tailscale serve --bg 9080
+```
+
+The first `tailscale serve` asks you to enable HTTPS for your tailnet, a single click in the Tailscale admin console. It then prints your address, something like `https://raspberrypi.your-tailnet.ts.net`.
+
+**3. Install it on your phone:** install the Tailscale app and sign in with the same account, open that address in Chrome, then tap the menu and **Install app**. From now on, **Share** > **Bookmarks** saves any link, at home or on the go, as long as Tailscale is connected on the phone (Android can keep it always on).
+
+Your bookmarks live in `~/bookmarks/data` on the server as plain markdown files. Already running Portainer and a reverse proxy? See [Deploying from this repository in Portainer](#deploying-from-this-repository-in-portainer) and [HTTPS with your own certificates](#https-with-your-own-certificates).
+
 ![Bash-Bookmarks on a phone: search, saving a shared link, and dark mode](docs/pwa-screenshot.png)
 
 ## Why self-host your bookmarks?
@@ -75,7 +103,7 @@ Portainer can build the stack straight from GitHub and redeploy when `main` chan
 
 1. **Stacks** > **Add stack** > **Repository**
 2. Repository URL: `https://github.com/ArtBIT/portainer-bookmarks`, reference: `refs/heads/main`, compose path: `docker-compose.yml`
-3. Bookmarks, logs and config are stored in host folders under `/portainer/Files/AppData/Config/bookmarks/` (see `docker-compose.yml`); change the paths there if your server uses a different location.
+3. Bookmarks, logs and config are stored in host folders under `/portainer/Files/AppData/Config/bookmarks/`. To use a different location, add an environment variable such as `BOOKMARKS_HOME=/srv/bookmarks`.
 4. Optionally enable **GitOps updates** so Portainer redeploys on new commits.
 
 If a stack with the same `container_name` already runs, stop or remove it first; bind-mounted host folders are not touched.
@@ -217,7 +245,7 @@ docker-compose up -d
 ## Data Management
 
 ### Host folders
-`docker-compose.yml` bind-mounts host folders for data persistence:
+`docker-compose.yml` bind-mounts host folders for data persistence, under `BOOKMARKS_HOME` (default `/portainer/Files/AppData/Config/bookmarks`):
 
 - **`/portainer/Files/AppData/Config/bookmarks/data`**: Bookmarks storage (`/data/bookmarks`)
 - **`/portainer/Files/AppData/Config/bookmarks/logs`**: Server logs (`/data/logs`)

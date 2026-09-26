@@ -8,10 +8,11 @@ services:
     ports:
       - "${PORT:-9080}:9080"
     volumes:
-      # Host folders, so the bookmarks are plain files on the server
-      - /portainer/Files/AppData/Config/bookmarks/data:/data/bookmarks:rw
-      - /portainer/Files/AppData/Config/bookmarks/logs:/data/logs:rw
-      - /portainer/Files/AppData/Config/bookmarks/config:/app/config:ro
+      # Host folders, so the bookmarks are plain files on the server.
+      # Set BOOKMARKS_HOME (for example in .env) to keep them somewhere else.
+      - ${BOOKMARKS_HOME:-/portainer/Files/AppData/Config/bookmarks}/data:/data/bookmarks:rw
+      - ${BOOKMARKS_HOME:-/portainer/Files/AppData/Config/bookmarks}/logs:/data/logs:rw
+      - ${BOOKMARKS_HOME:-/portainer/Files/AppData/Config/bookmarks}/config:/app/config:ro
     environment:
       - BOOKMARKS_DIR=/data/bookmarks
       - DEBUG=${DEBUG:-INFO}
