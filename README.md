@@ -47,6 +47,35 @@ open http://localhost:9080
    - Web UI: `http://your-server:9080`
    - API: `http://your-server:9080/search?q=query`
 
+### Deploying from this repository in Portainer
+
+Portainer can build the stack straight from GitHub and redeploy when `main` changes:
+
+1. **Stacks** > **Add stack** > **Repository**
+2. Repository URL: `https://github.com/ArtBIT/portainer-bookmarks`, reference: `refs/heads/main`, compose path: `docker-compose.yml`
+3. Bookmarks, logs and config are stored in host folders under `/portainer/Files/AppData/Config/bookmarks/` (see `docker-compose.yml`); change the paths there if your server uses a different location.
+4. Optionally enable **GitOps updates** so Portainer redeploys on new commits.
+
+If a stack with the same `container_name` already runs, stop or remove it first; bind-mounted host folders are not touched.
+
+## Web UI and Android app (PWA)
+
+![Web UI: searching bookmarks, saving a link shared from another app, and dark mode](docs/pwa-screenshot.png)
+
+The server hosts a mobile friendly web UI at `http://your-server:9080/` for searching, adding and removing bookmarks, with links to the import and export pages.
+
+The web UI can be installed as an app on Android, and then shows up in the native share sheet: share any link to "Bookmarks" and it opens the add form prefilled with the URL and title.
+
+Android only installs PWAs served over HTTPS (or `localhost`), so put the server behind HTTPS first:
+
+- **Nginx Proxy Manager:** add a proxy host with scheme `http`, forward host your server and port `9080`, and an SSL certificate the phone trusts. The server itself speaks plain HTTP, so the scheme must be `http`, not `https`.
+- [Tailscale](https://tailscale.com/kb/1312/serve): `tailscale serve --bg 9080`, then open `https://<machine>.<tailnet>.ts.net` on the phone.
+- Built in TLS: set `BOOKMARKS_TLS_CERT` and `BOOKMARKS_TLS_KEY` to a certificate and key the phone trusts.
+
+Then open the URL in Chrome on Android, tap the menu and choose "Install app" (or "Add to Home screen").
+
+The web UI has no authentication, so do not expose it to the public internet.
+
 ## Docker Compose Variants
 
 ### Basic Setup
@@ -95,12 +124,14 @@ docker-compose up -d
 
 ## Data Management
 
-### Docker Volumes
-The application uses Docker volumes for data persistence:
+### Host folders
+`docker-compose.yml` bind-mounts host folders for data persistence:
 
-- **`bookmarks_data`** (default): Bookmarks storage (`/data/bookmarks`)
-- **`bookmarks_logs`** (default): Server logs (`/data/logs`)
-- **`bookmarks_config`** (default): Configuration files (`/app/config`)
+- **`/portainer/Files/AppData/Config/bookmarks/data`**: Bookmarks storage (`/data/bookmarks`)
+- **`/portainer/Files/AppData/Config/bookmarks/logs`**: Server logs (`/data/logs`)
+- **`/portainer/Files/AppData/Config/bookmarks/config`**: Configuration files (`/app/config`)
+
+The options below describe setups with Docker volumes instead.
 
 ### Volume Configuration Options
 
@@ -187,9 +218,21 @@ curl "http://localhost:9080/search?q=python&format=text"
 ### Add Bookmark
 ```bash
 curl -X POST "http://localhost:9080/add" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "url=https://example.com&title=Example&category=test&tags=example"
+  --data-urlencode "url=https://example.com/?a=1&b=2" \
+  --data-urlencode "title=Example" \
+  --data-urlencode "category=test" \
+  --data-urlencode "tags=example"
 ```
+
+Parameters are URL-decoded, so values containing `&`, `+` or spaces must be encoded (`--data-urlencode` does that).
+
+### Web UI API
+
+The web UI uses these JSON endpoints:
+
+- `GET /api/search?q=searchterm`
+- `POST /api/add` with a JSON body `{url, title, category, tags}`
+- `DELETE /api/remove` with a JSON body `{id}`
 
 ### Import Bookmarks
 ```bash

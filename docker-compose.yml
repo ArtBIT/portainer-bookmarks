@@ -8,12 +8,10 @@ services:
     ports:
       - "${PORT:-9080}:9080"
     volumes:
-      # Mount bookmarks data directory using Docker volume
-      - bookmarks_data:/data/bookmarks:rw
-      # Mount logs directory using Docker volume
-      - bookmarks_logs:/data/logs:rw
-      # Mount configuration using Docker volume
-      - bookmarks_config:/app/config:ro
+      # Host folders, so the bookmarks are plain files on the server
+      - /portainer/Files/AppData/Config/bookmarks/data:/data/bookmarks:rw
+      - /portainer/Files/AppData/Config/bookmarks/logs:/data/logs:rw
+      - /portainer/Files/AppData/Config/bookmarks/config:/app/config:ro
     environment:
       - BOOKMARKS_DIR=/data/bookmarks
       - DEBUG=${DEBUG:-INFO}
@@ -33,11 +31,4 @@ services:
 networks:
   bookmarks-network:
     driver: bridge
-
-volumes:
-  bookmarks_data:
-    driver: local
-  bookmarks_logs:
-    driver: local
-  bookmarks_config:
-    driver: local 
+ 
