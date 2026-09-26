@@ -14,6 +14,10 @@ BOOKMARKS_DIR = os.environ.get('BOOKMARKS_DIR', '/data/bookmarks')
 DEBUG = os.environ.get('DEBUG', 'INFO')
 LOG_FILE = os.environ.get('LOG_FILE', '/data/logs/bookmarks-server.log')
 
+# Optional TLS, needed to install the web UI as a PWA without a reverse proxy
+TLS_CERT = os.environ.get('BOOKMARKS_TLS_CERT', '')
+TLS_KEY = os.environ.get('BOOKMARKS_TLS_KEY', '')
+
 # Server URLs
 SERVER_URL = f"http://localhost:{PORT}"
 HEALTH_CHECK_URL = f"http://localhost:{PORT}/"
