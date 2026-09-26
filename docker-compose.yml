@@ -8,11 +8,10 @@ services:
     ports:
       - "${PORT:-9080}:9080"
     volumes:
-      # Docker volumes by default; set these to host paths to use bind mounts instead,
-      # e.g. BOOKMARKS_DATA_VOLUME=/portainer/Files/AppData/Config/bookmarks/data
-      - ${BOOKMARKS_DATA_VOLUME:-bookmarks_data}:/data/bookmarks:rw
-      - ${BOOKMARKS_LOGS_VOLUME:-bookmarks_logs}:/data/logs:rw
-      - ${BOOKMARKS_CONFIG_VOLUME:-bookmarks_config}:/app/config:ro
+      # Host folders, so the bookmarks are plain files on the server
+      - /portainer/Files/AppData/Config/bookmarks/data:/data/bookmarks:rw
+      - /portainer/Files/AppData/Config/bookmarks/logs:/data/logs:rw
+      - /portainer/Files/AppData/Config/bookmarks/config:/app/config:ro
     environment:
       - BOOKMARKS_DIR=/data/bookmarks
       - DEBUG=${DEBUG:-INFO}
@@ -32,11 +31,4 @@ services:
 networks:
   bookmarks-network:
     driver: bridge
-
-volumes:
-  bookmarks_data:
-    driver: local
-  bookmarks_logs:
-    driver: local
-  bookmarks_config:
-    driver: local 
+ 

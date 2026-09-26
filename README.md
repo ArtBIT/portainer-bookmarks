@@ -53,12 +53,7 @@ Portainer can build the stack straight from GitHub and redeploy when `main` chan
 
 1. **Stacks** > **Add stack** > **Repository**
 2. Repository URL: `https://github.com/ArtBIT/portainer-bookmarks`, reference: `refs/heads/main`, compose path: `docker-compose.yml`
-3. To keep bookmarks in host folders instead of Docker volumes, add environment variables with host paths:
-   ```bash
-   BOOKMARKS_DATA_VOLUME=/portainer/Files/AppData/Config/bookmarks/data
-   BOOKMARKS_LOGS_VOLUME=/portainer/Files/AppData/Config/bookmarks/logs
-   BOOKMARKS_CONFIG_VOLUME=/portainer/Files/AppData/Config/bookmarks/config
-   ```
+3. Bookmarks, logs and config are stored in host folders under `/portainer/Files/AppData/Config/bookmarks/` (see `docker-compose.yml`); change the paths there if your server uses a different location.
 4. Optionally enable **GitOps updates** so Portainer redeploys on new commits.
 
 If a stack with the same `container_name` already runs, stop or remove it first; bind-mounted host folders are not touched.
@@ -129,12 +124,14 @@ docker-compose up -d
 
 ## Data Management
 
-### Docker Volumes
-The application uses Docker volumes for data persistence:
+### Host folders
+`docker-compose.yml` bind-mounts host folders for data persistence:
 
-- **`bookmarks_data`** (default): Bookmarks storage (`/data/bookmarks`)
-- **`bookmarks_logs`** (default): Server logs (`/data/logs`)
-- **`bookmarks_config`** (default): Configuration files (`/app/config`)
+- **`/portainer/Files/AppData/Config/bookmarks/data`**: Bookmarks storage (`/data/bookmarks`)
+- **`/portainer/Files/AppData/Config/bookmarks/logs`**: Server logs (`/data/logs`)
+- **`/portainer/Files/AppData/Config/bookmarks/config`**: Configuration files (`/app/config`)
+
+The options below describe setups with Docker volumes instead.
 
 ### Volume Configuration Options
 
