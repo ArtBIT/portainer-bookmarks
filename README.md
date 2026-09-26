@@ -98,6 +98,76 @@ Then open the URL in Chrome on Android, tap the menu and choose "Install app" (o
 
 The web UI has no authentication, so do not expose it to the public internet.
 
+### HTTPS with your own certificates
+
+Browsers only install a web app from a page served over HTTPS **without certificate warnings**. Clicking through "Your connection is not private" is not enough: the page stays marked "Not secure", the app's service worker is not registered, and "Install app" never appears. So every device that installs the app has to trust the certificate.
+
+#### Easiest: skip custom certificates
+
+- **Tailscale:** `tailscale serve --bg 9080` gives you a trusted `https://<machine>.<tailnet>.ts.net` address. Nothing to install on devices besides Tailscale.
+- **A real domain:** if you own a domain, request a Let's Encrypt certificate in Nginx Proxy Manager with a **DNS challenge** for a name like `bookmarks.example.com`, and point that name at your server in your local DNS. The certificate is trusted everywhere, even though the server is only reachable at home.
+
+#### Your own certificate authority (for names like `bookmarks.home`)
+
+Names like `.home` or `.lan` cannot get public certificates. Instead of a single self-signed certificate, create a small certificate authority (CA) of your own once, install it on each device once, and then issue certificates for any number of home services.
+
+**1. Create the CA** (once):
+
+```bash
+openssl req -x509 -new -nodes -newkey rsa:4096 -sha256 -days 3650 \
+  -keyout home-root-ca.key -out home-root-ca.crt -subj "/CN=Home Root CA" \
+  -addext "basicConstraints=critical,CA:TRUE" \
+  -addext "keyUsage=critical,keyCertSign,cRLSign" \
+  -addext "nameConstraints=critical,permitted;DNS:home"
+```
+
+The `nameConstraints` line limits this CA to names ending in `.home`, so even if its key leaked it could not be used to impersonate your bank. Change `home` to your local suffix (for example `lan`), or list several: `permitted;DNS:home,permitted;DNS:lan`. Keep `home-root-ca.key` private and never copy it to other devices.
+
+**2. Issue a certificate for the server:**
+
+```bash
+openssl req -new -newkey rsa:2048 -nodes -subj "/CN=bookmarks.home" \
+  -keyout bookmarks.home.key -out bookmarks.home.csr
+openssl x509 -req -in bookmarks.home.csr -CA home-root-ca.crt -CAkey home-root-ca.key \
+  -CAcreateserial -days 825 -sha256 -out bookmarks.home.crt \
+  -extfile <(printf "subjectAltName=DNS:bookmarks.home\nextendedKeyUsage=serverAuth")
+```
+
+- Browsers only look at `subjectAltName`, not the `CN`. The exact name you type in the browser must be listed there.
+- One certificate can cover several services: `subjectAltName=DNS:bookmarks.home,DNS:wiki.home`. List each name explicitly: browsers may reject a wildcard directly under the top-level name, such as `*.home`.
+- Keep the validity at 825 days or less: Apple devices reject server certificates valid for longer.
+
+**3. Use it in Nginx Proxy Manager:** **SSL Certificates** > **Add SSL Certificate** > **Custom**, upload `bookmarks.home.key` as the key and `bookmarks.home.crt` as the certificate. On the proxy host's **SSL** tab select it and enable **Force SSL**. The **Scheme** on the **Details** tab stays `http`.
+
+**4. Make the name resolve** on your network, for example with a local DNS record in Pi-hole (**Local DNS** > **DNS Records**) or your router. On Android, **Settings** > **Network & internet** > **Private DNS** must be **Off** or **Automatic**, otherwise the phone skips your local DNS.
+
+**5. Install the CA on each device.** Copy only `home-root-ca.crt` (never the `.key`):
+
+- **Android:** **Settings** > **Security & privacy** > **More security settings** > **Encryption & credentials** > **Install a certificate** > **CA certificate**, then pick the file. Menu names vary by manufacturer; searching Settings for "CA certificate" finds it. The phone needs a screen lock. A "Network may be monitored" notice afterwards is expected.
+- **iPhone / iPad:** send the file with AirDrop or email and open it, then **Settings** > **Profile Downloaded** > **Install**. Finally enable it under **Settings** > **General** > **About** > **Certificate Trust Settings**.
+- **Windows:** double-click the file > **Install Certificate** > **Place all certificates in the following store** > **Trusted Root Certification Authorities**.
+- **macOS:** open the file in Keychain Access, add it to the **System** keychain, open it and set **When using this certificate** to **Always Trust**.
+- **Linux:** `sudo cp home-root-ca.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates`. Chrome and Firefox keep their own lists: import it in Chrome under **Settings** > **Privacy and security** > **Security** > **Manage certificates**, and in Firefox under **Settings** > **Privacy & Security** > **View Certificates** > **Authorities** > **Import** (tick "Trust this CA to identify websites").
+
+**6. Install the app:** open `https://bookmarks.home` in Chrome on the phone. With a padlock and no warning, open the menu and choose **Install app** (or **Add to Home screen**).
+
+#### Troubleshooting
+
+| What you see | Cause |
+|---|---|
+| `NET::ERR_CERT_AUTHORITY_INVALID` | The CA is not installed on this device, or was installed as a user or VPN certificate instead of a **CA certificate**. |
+| `NET::ERR_CERT_COMMON_NAME_INVALID` | The name in the address bar is missing from the certificate's `subjectAltName`. |
+| `502 Bad Gateway` | The proxy host's **Scheme** is `https`; set it to `http`. |
+| `ERR_NAME_NOT_RESOLVED` | The name does not resolve: check the local DNS record and Android's **Private DNS** setting. |
+| Page works but no **Install app** | There is still a certificate warning somewhere, or the page was opened over `http://`. In desktop Chrome, **DevTools** > **Application** > **Manifest** lists what blocks installing. |
+
+To see which names a running server's certificate covers:
+
+```bash
+echo | openssl s_client -connect bookmarks.home:443 -servername bookmarks.home 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
 ## Docker Compose Variants
 
 ### Basic Setup
