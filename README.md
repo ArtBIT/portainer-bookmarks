@@ -1,6 +1,28 @@
 # Bash-Bookmarks
 
-A small plain text bookmarks manager with a Python HTTP server, Docker support, and web interface.
+**Your bookmarks. Your server. In your pocket.**
+
+A self-hosted bookmarks service that keeps every link as a plain markdown file you own, with a web app you can install on your phone and share links to straight from any app.
+
+![Bash-Bookmarks on a phone: search, saving a shared link, and dark mode](docs/pwa-screenshot.png)
+
+## Why self-host your bookmarks?
+
+**Save anything in two taps.** Install the web app on your Android phone and "Bookmarks" shows up in the share sheet, right next to your messaging apps. Found a great article in Chrome, a video on YouTube, a thread on Reddit? Tap **Share**, tap **Bookmarks**, and the link and title are already filled in. Pick a category, hit Save, and get back to what you were doing.
+
+**Your data is just files.** Every bookmark is a small markdown file in a folder named after its category. No database, no proprietary format, no lock-in. Back it up with rsync, version it with git, grep it from a terminal, or open the folder in Obsidian or any editor. If this project vanished tomorrow, your bookmarks would still be perfectly readable.
+
+**No accounts, no ads, no telemetry.** Bookmark services come and go (goodbye, Pocket), and free ones tend to pay for themselves with your reading habits. This one runs on your own hardware and answers only to you.
+
+**One library, every device.** The same server powers the phone app, the [bash-bookmarks](https://github.com/ArtBIT/bash-bookmarks) CLI and its Firefox add-on. Save a link on your phone during the commute, then pull it up from your terminal at your desk.
+
+**Feels like a real app.** It launches full screen from your home screen, follows your phone's light or dark mode, and searches as you type across titles, URLs, categories and tags.
+
+**Bring your history along.** Import browser bookmark exports (HTML), JSON, CSV or a Pocket export, and export everything back out whenever you like.
+
+**Boring to run, in the best way.** A single small Python container that needs nothing beyond the standard library. Deploy it as a Portainer stack straight from this repository, put it behind Nginx Proxy Manager, and forget about it.
+
+> Sharing from other apps works on Android (Chrome). On iPhone you can still add the web app to your home screen and add bookmarks from inside it.
 
 ## Features
 
